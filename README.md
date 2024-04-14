@@ -65,46 +65,11 @@ Also, includes a Render.com `render.yaml` and a working Django `production.py` s
 -   `django-defender` for blocking brute force attacks against login
 -   `whitenoise` and `brotlipy` for serving static assets
 
-## Share your project!
-
-Several people have leveraged our boilerplate to start spinoffs or to boost their efforts in the challenging pursuit of securing funding. Starting with a solid foundation allows you to create more resilient products and focus on what really matters: discovering and delivering value to your customers. If you are one of those people, we're eager to help you even more! We can spread the word about your project across our social media platforms, giving you access to a broader audience.
-
-Send us an email at contact@vintasoftware.com telling us a bit more about how our boilerplate helped you boost your project.
-
 ## Running
 
 ### Tools
 
 -   Setup [editorconfig](http://editorconfig.org/), [ruff](https://github.com/astral-sh/ruff) and [ESLint](http://eslint.org/) in the text editor you will use to develop.
-
-### Setup
-
--   Do the following:
-    -   Create a git-untracked `local.py` settings file:
-        `cp backend/content_vault/settings/local.py.example backend/content_vault/settings/local.py`
-    -   Create a git-untracked `.env.example` file:
-        `cp backend/.env.example backend/.env`
-
-### If you are using Docker:
-
--   Open the `backend/.env` file on a text editor and uncomment the line `DATABASE_URL=postgres://content_vault:password@db:5432/content_vault`
--   Open a new command line window and go to the project's directory
--   Run the initial setup:
-    `make docker_setup`
--   Create the migrations for `users` app:
-    `make docker_makemigrations`
--   Run the migrations:
-    `make docker_migrate`
--   Run the project:
-    `make docker_up`
--   Access `http://localhost:8000` on your browser and the project should be running there
-    -   When you run `make docker_up`, some containers are spinned up (frontend, backend, database, etc) and each one will be running on a different port
-    -   The container with the React app uses port 3000. However, if you try accessing it on your browser, the app won't appear there and you'll probably see a blank page with the "Cannot GET /" error
-    -   This happens because the container responsible for displaying the whole application is the Django app one (running on port 8000). The frontend container is responsible for providing a bundle with its assets for [django-webpack-loader](https://github.com/django-webpack/django-webpack-loader) to consume and render them on a Django template
--   To access the logs for each service, run:
-    `make docker_logs <service name>` (either `backend`, `frontend`, etc)
--   To stop the project, run:
-    `make docker_down`
 
 #### Adding new dependencies
 
@@ -115,52 +80,6 @@ Send us an email at contact@vintasoftware.com telling us a bit more about how ou
     -   To add a new **backend** dependency, run `docker compose run --rm backend bash` to open an interactive shell and then run `poetry add {dependency}` to add the dependency. If the dependency should be only available for development user append `-G dev` to the command.
     -   After updating the desired file(s), run `make docker_update_dependencies` to update the containers with the new dependencies
         > The above command will stop and re-build the containers in order to make the new dependencies effective
-
-### If you are not using Docker:
-
-#### Setup and run the frontend app
-
--   Open a new command line window and go to the project's directory
--   `npm install`
--   `npm run dev`
-    -   This is used to serve the frontend assets to be consumed by [django-webpack-loader](https://github.com/django-webpack/django-webpack-loader) and not to run the React application as usual, so don't worry if you try to check what's running on port 3000 and see an error on your browser
-
-#### Setup the backend app
-
--   Open the `backend/.env` file on a text editor and do one of the following:
-    -   If you wish to use SQLite locally, uncomment the line `DATABASE_URL=sqlite:///backend/db.sqlite3`
-    -   If you wish to use PostgreSQL locally, uncomment and edit the line `DATABASE_URL=postgres://content_vault:password@db:5432/content_vault` in order to make it correctly point to your database URL
-        -   The url format is the following: `postgres://USER:PASSWORD@HOST:PORT/NAME`
-    -   If you wish to use another database engine locally, add a new `DATABASE_URL` setting for the database you wish to use
-        -   Please refer to [dj-database-url](https://github.com/jazzband/dj-database-url#url-schema) on how to configure `DATABASE_URL` for commonly used engines
--   Open a new command line window and go to the project's directory
--   Run `poetry install`
-
-#### Run the backend app
-
--   Go to the `backend` directory
--   Create the migrations for `users` app:
-    `poetry run python manage.py makemigrations`
--   Run the migrations:
-    `poetry run python manage.py migrate`
--   Run the project:
-    `poetry run python manage.py runserver`
--   Open a browser and go to `http://localhost:8000` to see the project running
-
-#### Setup Celery
-
--   `poetry run celery --app=myproject worker --loglevel=info`
-
-#### Setup Redis
-
-- Ensure that Redis is already installed on your system. Once confirmed, run `redis-server --port 6379` to start the Redis server.
-
-#### Mailhog
-
--   For development, we use Mailhog to test our e-mail workflows, since it allows us to inspect the messages to validate they're correctly built
-    -   Docker users already have it setup and running once they start the project
-    -   For non-Docker users, please have a look [here](https://github.com/mailhog/MailHog#installation) for instructions on how to setup Mailhog on specific environments
-        > The project expects Mailhog SMTP server to be running on port 1025, you may alter that by changing `EMAIL_PORT` on settings
 
 ### Testing
 
@@ -173,17 +92,6 @@ Will run django tests using `--keepdb` and `--parallel`. You may pass a path to 
 ### Adding new pypi libs
 
 To add a new **backend** dependency, run `poetry add {dependency}`. If the dependency should be only available for development user append `-G dev` to the command.
-
-## Github Actions
-
-To enable Continuous Integration through Github Actions, we provide a `proj_main.yml` file. To connect it to Github you need to rename it to `main.yml` and move it to the `.github/workflows/` directory.
-
-You can do it with the following commands:
-
-```bash
-mkdir -p .github/workflows
-mv proj_main.yml .github/workflows/main.yml
-```
 
 ## Production Deployment
 
@@ -292,25 +200,3 @@ Some settings defaults were decided based on Vinta's experiences. Here's the rat
 ### `CELERY_TASK_ACKS_LATE = True`
 
 - We believe Celery tasks should be idempotent. So for us it's safe to set `CELERY_TASK_ACKS_LATE = True` to ensure tasks will be re-queued after a worker failure. Check Celery docs on ["Should I use retry or acks_late?"](https://docs.celeryq.dev/en/stable/faq.html#faq-acks-late-vs-retry) for more info.
-
-### Django-CSP
-
-Django-CSP helps implementing Content Security Policy (CSP) in Django projects to mitigate cross-site scripting (XSS) attacks by declaring which dynamic resources are allowed to load.
-
-In this project, we have defined several CSP settings that define the sources from which different types of resources can be loaded. If you need to load external images, fonts, or other resources, you will need to add the sources to the corresponding CSP settings. For example:
-- To load scripts from an external source, such as https://browser.sentry-cdn.com, you would add this source to `CSP_SCRIPT_SRC`.
-- To load images from an external source, such as https://example.com, you would add this source to `CSP_IMG_SRC`.
-
-Please note that you should only add trusted sources to these settings to maintain the security of your site. For more details, please refer to the [Django-CSP documentation](https://django-csp.readthedocs.io/en/latest/).
-
-## Contributing
-
-If you wish to contribute to this project, please first discuss the change you wish to make via an [issue](https://github.com/vintasoftware/django-react-boilerplate/issues).
-
-Check our [contributing guide](https://github.com/vintasoftware/django-react-boilerplate/blob/main/CONTRIBUTING.md) to learn more about our development process and how you can test your changes to the boilerplate.
-
-## Commercial Support
-
-[![alt text](https://avatars2.githubusercontent.com/u/5529080?s=80&v=4 "Vinta Logo")](https://www.vinta.com.br/)
-
-This project is maintained by [Vinta Software](https://www.vinta.com.br/) and is used in products of Vinta's clients. We are always looking for exciting work! If you need any commercial support, feel free to get in touch: contact@vinta.com.br
